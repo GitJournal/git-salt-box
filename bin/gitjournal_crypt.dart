@@ -1,8 +1,16 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
 // import 'package:gitjournal_crypt/gitjournal_crypt.dart' as gitjournal_crypt;
 import 'package:dart_git/dart_git.dart';
+import 'package:pinenacl/api.dart';
+import 'package:pinenacl/x25519.dart';
+
+import 'package:pinenacl/src/digests/digests.dart';
+import 'package:pinenacl/tweetnacl.dart';
+
+import 'package:path/path.dart' as p;
 
 Future<void> main(List<String> arguments) async {
   // print('Hello world: ${gitjournal_crypt.calculate()}!');
@@ -16,7 +24,7 @@ Future<void> main(List<String> arguments) async {
   switch (command) {
     // Encrypt the file
     case "clean":
-      print("Clean");
+      await encrypt();
       break;
 
     // Decrypt the file
@@ -76,4 +84,33 @@ String _generatePassword() {
 
   return String.fromCharCodes(Iterable.generate(
       length, (_) => _chars.codeUnitAt(_rnd.nextInt(_chars.length))));
+}
+
+Future<void> encrypt() async {
+  var filePath = "/home/vishesh/src/gitjournal/gitjournal-crypt/README.md";
+  var password = "foo";
+
+  var content = await File(filePath).readAsBytes();
+  var sha512 = Hash.sha512(content);
+
+  // get the password
+  // get the file path
+  //
+
+  var fileName = p.basename(filePath);
+  var keyString = "$fileName:$password";
+  var k = Hash.sha512(keyString);
+  final mac = Hash.blake2b(sha512, key: k);
+
+  print('Salt: $mac');
+  print("Content Length: ${content.length}");
+
+  var passwordHashed = Hash.sha512(password);
+  assert(passwordHashed.length == SecretBox.keyLength);
+
+  final box = SecretBox(passwordHashed);
+  final enc = box.encrypt(content, nonce: mac);
+
+  print("Encrypted Length: ${enc.length}");
+  print(enc);
 }
