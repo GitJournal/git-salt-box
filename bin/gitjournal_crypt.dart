@@ -29,7 +29,7 @@ Future<void> main(List<String> arguments) async {
 
     // Decrypt the file
     case "smudge":
-      print("smudge");
+      await decrypt();
       break;
 
     case "init":
@@ -86,31 +86,72 @@ String _generatePassword() {
       length, (_) => _chars.codeUnitAt(_rnd.nextInt(_chars.length))));
 }
 
+var password = "foo";
+var filePath = "/home/vishesh/src/gitjournal/gitjournal-crypt/README.md";
+
+Uint8List buildSalt(String filePath, Uint8List fileHash) {
+  var fileName = p.basename(filePath);
+  var keyString = "$fileName:$password";
+  var k = Hash.sha512(keyString);
+  var hash = Hash.blake2b(fileHash, key: k);
+  var salt = hash.sublist(hash.length - TweetNaCl.nonceLength);
+
+  assert(salt.length == TweetNaCl.nonceLength);
+  return salt;
+}
+
 Future<void> encrypt() async {
-  var filePath = "/home/vishesh/src/gitjournal/gitjournal-crypt/README.md";
-  var password = "foo";
+  // FIXME: Check if already encrypted!!
 
   var content = await File(filePath).readAsBytes();
-  var sha512 = Hash.sha512(content);
-
+  var salt = buildSalt(filePath, Hash.sha512(content));
   // get the password
   // get the file path
   //
 
-  var fileName = p.basename(filePath);
-  var keyString = "$fileName:$password";
-  var k = Hash.sha512(keyString);
-  final mac = Hash.blake2b(sha512, key: k);
-
-  print('Salt: $mac');
+  print('Salt: $salt');
+  print('Salt Length: ${salt.length}');
   print("Content Length: ${content.length}");
 
-  var passwordHashed = Hash.sha512(password);
+  var passwordHashed = Hash.sha256(password);
+  print(passwordHashed.length);
+  print(SecretBox.keyLength);
   assert(passwordHashed.length == SecretBox.keyLength);
 
   final box = SecretBox(passwordHashed);
-  final enc = box.encrypt(content, nonce: mac);
+  final enc = box.encrypt(content, nonce: salt);
 
   print("Encrypted Length: ${enc.length}");
-  print(enc);
+  print(enc.nonce.length);
+  print(enc.cipherText.length);
+
+  print('Nonce Length: ${enc.nonce.lengthInBytes}');
+  print('Nonce: ${enc.nonce}');
+  print("Password: $password");
+  print(enc.cipherText);
+
+  await File(filePath).writeAsBytes(enc);
+}
+
+Future<void> decrypt() async {
+  var content = await File(filePath).readAsBytes();
+  var nonce = content.sublist(0, 24);
+  var cipherText = content.sublist(24);
+
+  print('Nonce: $nonce');
+  print('Nonce Length: ${nonce.length}');
+  print("Password: $password");
+  print(cipherText);
+
+  var passwordHashed = Hash.sha256(password);
+  assert(passwordHashed.length == SecretBox.keyLength);
+
+  final box = SecretBox(passwordHashed);
+
+  var enc = EncryptedMessage(nonce: nonce, cipherText: cipherText);
+  var orig = box.decrypt(enc);
+
+  print("Content Length: ${orig.length}");
+
+  await File(filePath).writeAsBytes(orig);
 }
