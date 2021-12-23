@@ -12,7 +12,7 @@ dependencies:
   dart_git:
     git: https://github.com/GitJournal/dart_git.git
     # path: ../dart-git
-  pinenacl: any
+  pinenacl: ^0.3.3
 
 dev_dependencies:
   lints: ^1.0.0
