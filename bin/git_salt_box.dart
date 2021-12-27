@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
-// import 'package:gitjournal_crypt/gitjournal_crypt.dart' as gitjournal_crypt;
 import 'package:dart_git/dart_git.dart';
 import 'package:pinenacl/api.dart';
 import 'package:pinenacl/x25519.dart';
@@ -87,7 +85,7 @@ String _generatePassword() {
 }
 
 var password = "foo";
-var filePath = "/home/vishesh/src/gitjournal/gitjournal-crypt/README.md";
+var filePath = "/home/vishesh/src/gitjournal/git-salt-box/README.md";
 
 Uint8List buildSalt(String filePath, Uint8List fileHash) {
   var fileName = p.basename(filePath);

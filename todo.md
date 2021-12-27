@@ -5,3 +5,10 @@
 * Add tests to make sure it does the exact same thing as the git executable
   - this goes in dart-git
 * Need the git attribute parser
+
+---
+* Fetch the password from the config
+* Abstract out the FileSystem
+* Add Makefile installDev which creates a symlink to /usr/local/bin
+
+* Use proper libsodium if present instead of this dart version
