@@ -6,6 +6,8 @@ version: 1.0.0
 environment:
   sdk: ">=2.14.0 <3.0.0"
 
+publish_to: none
+
 dependencies:
   dart_git:
     git: https://github.com/GitJournal/dart_git.git
