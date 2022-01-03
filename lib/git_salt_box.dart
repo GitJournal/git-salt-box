@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 // import 'package:sodium/sodium.dart';
 
+import 'package:collection/collection.dart';
 import 'package:pinenacl/api.dart';
 import 'package:pinenacl/digests.dart';
 import 'package:pinenacl/x25519.dart';
@@ -11,6 +12,11 @@ import 'package:pinenacl/tweetnacl.dart';
 import 'package:path/path.dart' as p;
 
 class GitSaltBox {
+  // GITSB + version + \0
+  static final _magicHeader =
+      Uint8List.fromList([71, 73, 84, 83, 66, _version, 0]);
+  static const _version = 1;
+
   // final Sodium sodium;
   final String password;
 
@@ -18,7 +24,10 @@ class GitSaltBox {
 
   Uint8List encrypt(String filePath, List<int> input) {
     var content = input is Uint8List ? input : Uint8List.fromList(input);
-    // FIXME: Check if already encrypted!!
+    var header = Uint8List.sublistView(content, 0, _magicHeader.length);
+    if (_eq(header, _magicHeader)) {
+      throw Exception('Already Encrypted');
+    }
 
     var salt = _buildSalt(filePath, Hash.sha512(content));
     var passwordHashed = Hash.sha256(password);
@@ -27,15 +36,26 @@ class GitSaltBox {
     final box = SecretBox(passwordHashed);
     final enc = box.encrypt(content, nonce: salt);
 
-    return enc.toUint8List();
+    var builder = BytesBuilder(copy: false);
+    builder.add(_magicHeader);
+    builder.add(enc);
+    return builder.toBytes();
   }
 
   Uint8List decrypt(Uint8List encMessage) {
-    if (encMessage.length < 25) {
+    var mhLen = _magicHeader.length;
+    if (encMessage.length < 25 + mhLen) {
       throw ArgumentError('Encrypted Cipher too short: ${encMessage.length}');
     }
-    var nonce = encMessage.sublist(0, 24);
-    var cipherText = encMessage.sublist(24);
+    var header = Uint8List.sublistView(encMessage, 0, mhLen);
+    if (!_eq(header, _magicHeader)) {
+      throw Exception('UnEncrypted');
+    }
+
+    var _nonceLength = 24;
+    var nonce = Uint8List.sublistView(encMessage, mhLen, mhLen + _nonceLength);
+    var cipherText = Uint8List.sublistView(
+        encMessage, mhLen + _nonceLength, encMessage.length);
 
     var passwordHashed = Hash.sha256(password);
     assert(passwordHashed.length == SecretBox.keyLength);
@@ -58,6 +78,8 @@ class GitSaltBox {
     return salt;
   }
 }
+
+var _eq = ListEquality().equals;
 
 // Fuck it, just always use lib-sodium
 
