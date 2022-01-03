@@ -1,9 +1,6 @@
-import 'dart:typed_data';
-
 import 'package:buffer/buffer.dart';
 import 'package:collection/collection.dart';
 import 'package:path/path.dart' as p;
-import 'package:pinenacl/api.dart';
 import 'package:pinenacl/digests.dart';
 import 'package:pinenacl/tweetnacl.dart';
 import 'package:pinenacl/x25519.dart';
