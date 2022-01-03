@@ -21,6 +21,7 @@ class GitSaltBox {
 
   GitSaltBox({required this.password});
 
+  /// throws GSBAlreadyEncrypted
   Uint8List encrypt(String filePath, List<int> input) {
     var content = input is Uint8List ? input : Uint8List.fromList(input);
     var header = Uint8List.sublistView(content, 0, _magicHeader.length);
@@ -41,6 +42,7 @@ class GitSaltBox {
     return builder.toBytes();
   }
 
+  /// throws GSBNotEncrypted
   Uint8List decrypt(Uint8List encMessage) {
     var mhLen = _magicHeader.length;
     if (encMessage.length < 25 + mhLen) {
