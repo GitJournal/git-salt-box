@@ -2,19 +2,14 @@
 
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:dart_git/dart_git.dart';
-import 'package:pinenacl/api.dart';
-import 'package:pinenacl/x25519.dart';
+import 'package:git_salt_box/git_salt_box.dart';
 
-import 'package:pinenacl/src/digests/digests.dart';
-import 'package:pinenacl/tweetnacl.dart';
-
-import 'package:path/path.dart' as p;
+var password = "foo";
 
 Future<void> main(List<String> arguments) async {
-  // print('Hello world: ${gitjournal_crypt.calculate()}!');
-
   if (arguments.isEmpty) {
     log("Arguments Missing");
     exit(1);
@@ -26,33 +21,38 @@ Future<void> main(List<String> arguments) async {
     // Encrypt the file
     case "clean":
       var filePath = arguments[1];
-      await encrypt(filePath);
+      var box = GitSaltBox(password: password);
+      var fileContents = File(filePath).readAsBytesSync();
+      var encFile = box.encrypt(filePath, fileContents);
+      stdout.add(encFile);
+
       break;
 
     // Decrypt the file
     case "smudge":
-      var content = readInput();
+      var encMessage = readInput();
       try {
-        await decrypt(content);
+        var box = GitSaltBox(password: password);
+        var origMsg = box.decrypt(encMessage);
+        stdout.add(origMsg);
       } catch (ex) {
         log(ex);
-        for (var byte in content) {
-          stdout.writeCharCode(byte);
-        }
+        stdout.add(encMessage);
       }
       break;
 
     // Decrypt the file (for git-diff)
     case "textconv":
       var filePath = arguments[1];
-      var content = File(filePath).readAsBytesSync();
+      var encMessage = File(filePath).readAsBytesSync();
+
       try {
-        await decrypt(content);
+        var box = GitSaltBox(password: password);
+        var origMsg = box.decrypt(encMessage);
+        stdout.add(origMsg);
       } catch (ex) {
         log(ex);
-        for (var byte in content) {
-          stdout.writeCharCode(byte);
-        }
+        stdout.add(encMessage);
       }
       break;
 
@@ -118,82 +118,6 @@ String _generatePassword() {
 
   return String.fromCharCodes(Iterable.generate(
       length, (_) => _chars.codeUnitAt(_rnd.nextInt(_chars.length))));
-}
-
-var password = "foo";
-
-Uint8List buildSalt(String filePath, Uint8List fileHash) {
-  var fileName = p.basename(filePath);
-  var keyString = "$fileName:$password";
-  var k = Hash.sha512(keyString);
-  var hash = Hash.blake2b(fileHash, key: k);
-  var salt = hash.sublist(hash.length - TweetNaCl.nonceLength);
-
-  assert(salt.length == TweetNaCl.nonceLength);
-  return salt;
-}
-
-Future<void> encrypt(String filePath) async {
-  // FIXME: Check if already encrypted!!
-
-  var content = await File(filePath).readAsBytes();
-  var salt = buildSalt(filePath, Hash.sha512(content));
-  // get the password
-  // get the file path
-  //
-
-  log('Salt: $salt');
-  log('Salt Length: ${salt.length}');
-  log("Content Length: ${content.length}");
-
-  var passwordHashed = Hash.sha256(password);
-  log(passwordHashed.length);
-  log(SecretBox.keyLength);
-  assert(passwordHashed.length == SecretBox.keyLength);
-
-  final box = SecretBox(passwordHashed);
-  final enc = box.encrypt(content, nonce: salt);
-
-  log("Encrypted Length: ${enc.length}");
-  log(enc.nonce.length);
-  log(enc.cipherText.length);
-
-  log('Nonce Length: ${enc.nonce.lengthInBytes}');
-  log('Nonce: ${enc.nonce}');
-  log("Password: $password");
-  log(enc.cipherText);
-
-  stdout.add(enc);
-  // await File(filePath).writeAsBytes(enc);
-}
-
-Future<void> decrypt(Uint8List content) async {
-  if (content.length < 25) {
-    throw ArgumentError('Decrypted Cipher too short: ${content.length}');
-  }
-  // var content = await File(filePath).readAsBytes();
-  var nonce = content.sublist(0, 24);
-  var cipherText = content.sublist(24);
-
-  // print('Nonce: $nonce');
-  // print('Nonce Length: ${nonce.length}');
-  // print("Password: $password");
-  // print(cipherText);
-
-  var passwordHashed = Hash.sha256(password);
-  assert(passwordHashed.length == SecretBox.keyLength);
-
-  final box = SecretBox(passwordHashed);
-
-  var enc = EncryptedMessage(nonce: nonce, cipherText: cipherText);
-  var orig = box.decrypt(enc);
-
-  // print("Content Length: ${orig.length}");
-
-  for (var byte in orig) {
-    stdout.writeCharCode(byte);
-  }
-  // await File(filePath).writeAsBytes(orig);
 }
 
 void log(dynamic message) {
