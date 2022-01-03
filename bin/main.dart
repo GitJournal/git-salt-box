@@ -21,22 +21,27 @@ Future<void> main(List<String> arguments) async {
     // Encrypt the file
     case "clean":
       var filePath = arguments[1];
-      var box = GitSaltBox(password: password);
       var fileContents = File(filePath).readAsBytesSync();
-      var encFile = box.encrypt(filePath, fileContents);
-      stdout.add(encFile);
+
+      try {
+        var box = GitSaltBox(password: password);
+        var encFile = box.encrypt(filePath, fileContents);
+        stdout.add(encFile);
+      } on GSBAlreadyEncrypted catch (_) {
+        stdout.add(fileContents);
+      }
 
       break;
 
     // Decrypt the file
     case "smudge":
       var encMessage = readInput();
+
       try {
         var box = GitSaltBox(password: password);
         var origMsg = box.decrypt(encMessage);
         stdout.add(origMsg);
-      } catch (ex) {
-        log(ex);
+      } on GSBNotEncrypted catch (_) {
         stdout.add(encMessage);
       }
       break;
@@ -50,8 +55,7 @@ Future<void> main(List<String> arguments) async {
         var box = GitSaltBox(password: password);
         var origMsg = box.decrypt(encMessage);
         stdout.add(origMsg);
-      } catch (ex) {
-        log(ex);
+      } on GSBNotEncrypted catch (_) {
         stdout.add(encMessage);
       }
       break;

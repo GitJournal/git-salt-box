@@ -26,7 +26,7 @@ class GitSaltBox {
     var content = input is Uint8List ? input : Uint8List.fromList(input);
     var header = Uint8List.sublistView(content, 0, _magicHeader.length);
     if (_eq(header, _magicHeader)) {
-      throw Exception('Already Encrypted');
+      throw GSBAlreadyEncrypted();
     }
 
     var salt = _buildSalt(filePath, Hash.sha512(content));
@@ -45,11 +45,11 @@ class GitSaltBox {
   Uint8List decrypt(Uint8List encMessage) {
     var mhLen = _magicHeader.length;
     if (encMessage.length < 25 + mhLen) {
-      throw ArgumentError('Encrypted Cipher too short: ${encMessage.length}');
+      throw GSBNotEncrypted();
     }
     var header = Uint8List.sublistView(encMessage, 0, mhLen);
     if (!_eq(header, _magicHeader)) {
-      throw Exception('UnEncrypted');
+      throw GSBNotEncrypted();
     }
 
     var _nonceLength = 24;
@@ -81,9 +81,6 @@ class GitSaltBox {
 
 var _eq = ListEquality().equals;
 
-// Fuck it, just always use lib-sodium
+class GSBAlreadyEncrypted implements Exception {}
 
-// SecretBox
-// * encrypt
-// * decrypt
-//
+class GSBNotEncrypted implements Exception {}
