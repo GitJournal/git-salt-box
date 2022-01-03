@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:git_salt_box/git_salt_box.dart';
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
-import 'package:path/path.dart' as p;
+import 'package:git_salt_box/git_salt_box.dart';
 
 void main() {
   test('calculate', () {

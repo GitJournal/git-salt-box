@@ -5,6 +5,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:dart_git/dart_git.dart';
+
 import 'package:git_salt_box/git_salt_box.dart';
 
 var password = "foo";
