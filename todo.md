@@ -9,6 +9,16 @@
 ---
 * Fetch the password from the config
 * Abstract out the FileSystem
-* Add Makefile installDev which creates a symlink to /usr/local/bin
 
 * Use proper libsodium if present instead of this dart version
+
+
+---
+
+* Fetch the password from the config
+* Ensure that git-salt-box has been installed
+* Check if already encrypted
+* Print the argument list when no arguments are provided
+* Avoid reading the entire file into memory
+  - Do this in chunks
+  - But still sync
