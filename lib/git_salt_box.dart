@@ -9,14 +9,11 @@ import 'package:pinenacl/x25519.dart';
 
 // import 'package:sodium/sodium.dart';
 
-
-
-
 class GitSaltBox {
   // GITSB + version + \0
   static final _magicHeader =
-      Uint8List.fromList([71, 73, 84, 83, 66, _version, 0]);
-  static const _version = 1;
+      Uint8List.fromList([71, 73, 84, 83, 66, version, 0]);
+  static const version = 1;
 
   // final Sodium sodium;
   final String password;

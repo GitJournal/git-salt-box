@@ -79,7 +79,6 @@ Uint8List readInput() {
 }
 
 const _execName = "git-salt-box";
-const _version = "0.0.1";
 
 Future<void> init() async {
   var repoPath = GitRepository.findRootDir(Directory.current.path);
@@ -103,7 +102,7 @@ Future<void> init() async {
   section.options['clean'] = '"$_execName" clean';
 
   var gjSection = repo.config.getOrCreateSection(_execName);
-  gjSection.options["version"] = _version;
+  gjSection.options["version"] = GitSaltBox.version.toString();
   gjSection.options["password"] = _generatePassword();
 
   var r = await repo.saveConfig();
