@@ -37,7 +37,7 @@ packages:
     source: hosted
     version: "2.1.0"
   buffer:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: buffer
       url: "https://pub.dartlang.org"

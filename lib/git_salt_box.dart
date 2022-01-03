@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:buffer/buffer.dart';
 import 'package:collection/collection.dart';
 import 'package:path/path.dart' as p;
 import 'package:pinenacl/api.dart';
@@ -45,15 +46,18 @@ class GitSaltBox {
     if (encMessage.length < 25 + mhLen) {
       throw GSBNotEncrypted();
     }
-    var header = Uint8List.sublistView(encMessage, 0, mhLen);
+
+    var reader = ByteDataReader(copy: false);
+    reader.add(encMessage);
+
+    var header = reader.read(mhLen);
     if (!_eq(header, _magicHeader)) {
       throw GSBNotEncrypted();
     }
 
     var _nonceLength = 24;
-    var nonce = Uint8List.sublistView(encMessage, mhLen, mhLen + _nonceLength);
-    var cipherText = Uint8List.sublistView(
-        encMessage, mhLen + _nonceLength, encMessage.length);
+    var nonce = reader.read(_nonceLength);
+    var cipherText = reader.read(reader.remainingLength);
 
     var passwordHashed = Hash.sha256(password);
     assert(passwordHashed.length == SecretBox.keyLength);

@@ -8,6 +8,7 @@ environment:
 publish_to: none
 
 dependencies:
+  buffer: ^1.1.1
   collection: ^1.15.0
   dart_git:
     git: https://github.com/GitJournal/dart_git.git
