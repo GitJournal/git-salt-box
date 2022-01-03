@@ -36,7 +36,7 @@ Future<void> main(List<String> arguments) async {
   }
 }
 
-const _execName = "git-journal-crypt";
+const _execName = "git-salt-box";
 const _version = "0.0.1";
 
 Future<void> init() async {
@@ -48,13 +48,12 @@ Future<void> init() async {
   }
 
   var repo = await GitRepository.load(repoPath).getOrThrow();
-  var section = repo.config
-      .getOrCreateSection('filter')
-      .getOrCreateSection("git-journal-crypt");
+  var section =
+      repo.config.getOrCreateSection('filter').getOrCreateSection(_execName);
 
   if (section.isNotEmpty) {
     print(
-        'Error: this repository has already been initialized with git-journal-crypt.');
+        'Error: this repository has already been initialized with $_execName.');
     exit(1);
   }
 
