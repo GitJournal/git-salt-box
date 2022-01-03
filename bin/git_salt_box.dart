@@ -19,6 +19,7 @@ Future<void> main(List<String> arguments) async {
     log("Arguments Missing");
     exit(1);
   }
+  log(arguments);
 
   var command = arguments[0];
   switch (command) {
@@ -31,7 +32,28 @@ Future<void> main(List<String> arguments) async {
     // Decrypt the file
     case "smudge":
       var content = readInput();
-      await decrypt(content);
+      try {
+        await decrypt(content);
+      } catch (ex) {
+        log(ex);
+        for (var byte in content) {
+          stdout.writeCharCode(byte);
+        }
+      }
+      break;
+
+    // Decrypt the file (for git-diff)
+    case "textconv":
+      var filePath = arguments[1];
+      var content = File(filePath).readAsBytesSync();
+      try {
+        await decrypt(content);
+      } catch (ex) {
+        log(ex);
+        for (var byte in content) {
+          stdout.writeCharCode(byte);
+        }
+      }
       break;
 
     case "init":
@@ -146,6 +168,9 @@ Future<void> encrypt(String filePath) async {
 }
 
 Future<void> decrypt(Uint8List content) async {
+  if (content.length < 25) {
+    throw ArgumentError('Decrypted Cipher too short: ${content.length}');
+  }
   // var content = await File(filePath).readAsBytes();
   var nonce = content.sublist(0, 24);
   var cipherText = content.sublist(24);
