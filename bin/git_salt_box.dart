@@ -16,25 +16,38 @@ Future<void> main(List<String> arguments) async {
   // print('Hello world: ${gitjournal_crypt.calculate()}!');
 
   if (arguments.isEmpty) {
-    print("Arguments empty");
+    log("Arguments Missing");
     exit(1);
   }
 
-  var command = arguments.first;
+  var command = arguments[0];
   switch (command) {
     // Encrypt the file
     case "clean":
-      await encrypt();
+      var filePath = arguments[1];
+      await encrypt(filePath);
       break;
 
     // Decrypt the file
     case "smudge":
-      await decrypt();
+      var content = readInput();
+      await decrypt(content);
       break;
 
     case "init":
       await init();
       break;
+  }
+}
+
+Uint8List readInput() {
+  var input = <int>[];
+  while (true) {
+    var b = stdin.readByteSync();
+    if (b == -1) {
+      return Uint8List.fromList(input);
+    }
+    input.add(b);
   }
 }
 
@@ -86,7 +99,6 @@ String _generatePassword() {
 }
 
 var password = "foo";
-var filePath = "/home/vishesh/src/gitjournal/git-salt-box/README.md";
 
 Uint8List buildSalt(String filePath, Uint8List fileHash) {
   var fileName = p.basename(filePath);
@@ -99,7 +111,7 @@ Uint8List buildSalt(String filePath, Uint8List fileHash) {
   return salt;
 }
 
-Future<void> encrypt() async {
+Future<void> encrypt(String filePath) async {
   // FIXME: Check if already encrypted!!
 
   var content = await File(filePath).readAsBytes();
@@ -108,39 +120,40 @@ Future<void> encrypt() async {
   // get the file path
   //
 
-  print('Salt: $salt');
-  print('Salt Length: ${salt.length}');
-  print("Content Length: ${content.length}");
+  log('Salt: $salt');
+  log('Salt Length: ${salt.length}');
+  log("Content Length: ${content.length}");
 
   var passwordHashed = Hash.sha256(password);
-  print(passwordHashed.length);
-  print(SecretBox.keyLength);
+  log(passwordHashed.length);
+  log(SecretBox.keyLength);
   assert(passwordHashed.length == SecretBox.keyLength);
 
   final box = SecretBox(passwordHashed);
   final enc = box.encrypt(content, nonce: salt);
 
-  print("Encrypted Length: ${enc.length}");
-  print(enc.nonce.length);
-  print(enc.cipherText.length);
+  log("Encrypted Length: ${enc.length}");
+  log(enc.nonce.length);
+  log(enc.cipherText.length);
 
-  print('Nonce Length: ${enc.nonce.lengthInBytes}');
-  print('Nonce: ${enc.nonce}');
-  print("Password: $password");
-  print(enc.cipherText);
+  log('Nonce Length: ${enc.nonce.lengthInBytes}');
+  log('Nonce: ${enc.nonce}');
+  log("Password: $password");
+  log(enc.cipherText);
 
-  await File(filePath).writeAsBytes(enc);
+  stdout.add(enc);
+  // await File(filePath).writeAsBytes(enc);
 }
 
-Future<void> decrypt() async {
-  var content = await File(filePath).readAsBytes();
+Future<void> decrypt(Uint8List content) async {
+  // var content = await File(filePath).readAsBytes();
   var nonce = content.sublist(0, 24);
   var cipherText = content.sublist(24);
 
-  print('Nonce: $nonce');
-  print('Nonce Length: ${nonce.length}');
-  print("Password: $password");
-  print(cipherText);
+  // print('Nonce: $nonce');
+  // print('Nonce Length: ${nonce.length}');
+  // print("Password: $password");
+  // print(cipherText);
 
   var passwordHashed = Hash.sha256(password);
   assert(passwordHashed.length == SecretBox.keyLength);
@@ -150,7 +163,17 @@ Future<void> decrypt() async {
   var enc = EncryptedMessage(nonce: nonce, cipherText: cipherText);
   var orig = box.decrypt(enc);
 
-  print("Content Length: ${orig.length}");
+  // print("Content Length: ${orig.length}");
 
-  await File(filePath).writeAsBytes(orig);
+  for (var byte in orig) {
+    stdout.writeCharCode(byte);
+  }
+  // await File(filePath).writeAsBytes(orig);
+}
+
+void log(dynamic message) {
+  File('/tmp/k').writeAsStringSync(
+    message.toString() + '\n',
+    mode: FileMode.writeOnlyAppend,
+  );
 }
