@@ -8,8 +8,6 @@
 
 ---
 
-* Fetch the password from the config
-* Ensure that git-salt-box has been installed
 * Print the argument list when no arguments are provided
 * Avoid reading the entire file into memory
   - Do this in chunks

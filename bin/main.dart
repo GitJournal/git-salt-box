@@ -8,8 +8,6 @@ import 'package:dart_git/dart_git.dart';
 
 import 'package:git_salt_box/git_salt_box.dart';
 
-var password = "foo";
-
 void main(List<String> arguments) {
   if (arguments.isEmpty) {
     log("Arguments Missing");
@@ -25,11 +23,17 @@ void main(List<String> arguments) {
       var fileContents = File(filePath).readAsBytesSync();
 
       try {
-        var box = GitSaltBox(password: password);
+        var box = GitSaltBox(password: _fetchPassword());
         var encFile = box.encrypt(filePath, fileContents);
         stdout.add(encFile);
       } on GSBAlreadyEncrypted catch (_) {
         stdout.add(fileContents);
+      } on NotAGitRepoException catch (e) {
+        print(e);
+        exit(1);
+      } on GitSaltBoxNotInitialized catch (e) {
+        print(e);
+        exit(1);
       }
 
       break;
@@ -39,11 +43,17 @@ void main(List<String> arguments) {
       var encMessage = readInput();
 
       try {
-        var box = GitSaltBox(password: password);
+        var box = GitSaltBox(password: _fetchPassword());
         var origMsg = box.decrypt(encMessage);
         stdout.add(origMsg);
       } on GSBNotEncrypted catch (_) {
         stdout.add(encMessage);
+      } on NotAGitRepoException catch (e) {
+        print(e);
+        exit(1);
+      } on GitSaltBoxNotInitialized catch (e) {
+        print(e);
+        exit(1);
       }
       break;
 
@@ -53,11 +63,17 @@ void main(List<String> arguments) {
       var encMessage = File(filePath).readAsBytesSync();
 
       try {
-        var box = GitSaltBox(password: password);
+        var box = GitSaltBox(password: _fetchPassword());
         var origMsg = box.decrypt(encMessage);
         stdout.add(origMsg);
       } on GSBNotEncrypted catch (_) {
         stdout.add(encMessage);
+      } on NotAGitRepoException catch (e) {
+        print(e);
+        exit(1);
+      } on GitSaltBoxNotInitialized catch (e) {
+        print(e);
+        exit(1);
       }
       break;
 
@@ -112,6 +128,25 @@ void init() {
   }
 }
 
+String _fetchPassword() {
+  var repoPath = GitRepository.findRootDir(Directory.current.path);
+  if (repoPath == null) {
+    throw NotAGitRepoException();
+  }
+
+  var repo = GitRepository.load(repoPath).getOrThrow();
+  var gjSection = repo.config.section(_execName);
+  if (gjSection == null) {
+    throw GitSaltBoxNotInitialized();
+  }
+
+  var password = gjSection.options["password"];
+  if (password == null) {
+    throw GitSaltBoxNotInitialized();
+  }
+  return password;
+}
+
 // Wouldn't it be better to generate a more secure password and just base64 encode it?
 String _generatePassword() {
   const _chars =
@@ -129,4 +164,15 @@ void log(dynamic message) {
     message.toString() + '\n',
     mode: FileMode.writeOnlyAppend,
   );
+}
+
+class NotAGitRepoException implements Exception {
+  @override
+  String toString() =>
+      "fatal: not a git repository (or any of the parent directories): .git";
+}
+
+class GitSaltBoxNotInitialized implements Exception {
+  @override
+  String toString() => "GitSaltBox has not been installed";
 }
