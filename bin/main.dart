@@ -13,10 +13,9 @@ import 'qr.dart';
 
 void main(List<String> arguments) {
   if (arguments.isEmpty) {
-    log("Arguments Missing");
+    print("Arguments Missing");
     exit(1);
   }
-  log(arguments);
 
   var command = arguments[0];
   switch (command) {
@@ -100,26 +99,26 @@ void main(List<String> arguments) {
       break;
 
     case "merge":
-      var baseEnc = arguments[1];
-      var localEnc = arguments[2];
-      var remoteEnc = arguments[3];
+      // var baseEnc = arguments[1];
+      // var localEnc = arguments[2];
+      // var remoteEnc = arguments[3];
 
-      var markerSize = arguments[4];
-      var tempFile = arguments[5];
+      // var markerSize = arguments[4];
+      // var tempFile = arguments[5];
 
-      // TODO: Decrypt all of them
+      // // FIXME: Decrypt all of them
 
-      // Call git-merge-file
+      // // Call git-merge-file
 
-      try {
-        init();
-      } on NotAGitRepoException catch (e) {
-        print(e);
-        exit(1);
-      } on GitSaltBoxNotInitialized catch (e) {
-        print(e);
-        exit(1);
-      }
+      // try {
+      //   init();
+      // } on NotAGitRepoException catch (e) {
+      //   print(e);
+      //   exit(1);
+      // } on GitSaltBoxNotInitialized catch (e) {
+      //   print(e);
+      //   exit(1);
+      // }
       break;
   }
 }
@@ -200,13 +199,6 @@ Uint8List _fetchPassword() {
 String _generatePassword() {
   var bytes = PineNaClUtils.randombytes(32);
   return base64.encode(bytes);
-}
-
-void log(dynamic message) {
-  File('/tmp/k').writeAsStringSync(
-    message.toString() + '\n',
-    mode: FileMode.writeOnlyAppend,
-  );
 }
 
 class NotAGitRepoException implements Exception {

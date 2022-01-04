@@ -20,3 +20,4 @@
 * add
 * rm
 * lock / unlock
+* unlock can take an optional password
