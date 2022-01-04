@@ -7,7 +7,6 @@ String printQr(String input) {
   );
 
   var whiteB = '\x1b[30;107m';
-  // var blackB = '\x1b[40;100m';
 
   var lowerB = '\u{2584}';
   var upperB = '\u{2580}';
@@ -26,9 +25,10 @@ String printQr(String input) {
 
   for (int y = 0; y < width; y += 2) {
     var line = '';
+    line += whiteB;
 
     for (var x = 0; x < margin * 2; x++) {
-      line += whiteB + empty;
+      line += empty;
     }
 
     for (int x = 0; x < width; x++) {
@@ -36,21 +36,21 @@ String printQr(String input) {
       var darkBelow = y + 1 == width ? false : qrImage.isDark(y + 1, x);
       if (isDark) {
         if (darkBelow) {
-          line += whiteB + fullB;
+          line += fullB;
         } else {
-          line += whiteB + upperB;
+          line += upperB;
         }
       } else {
         if (darkBelow) {
-          line += whiteB + lowerB;
+          line += lowerB;
         } else {
-          line += whiteB + empty;
+          line += empty;
         }
       }
     }
 
     for (var x = 0; x < margin * 2; x++) {
-      line += whiteB + empty;
+      line += empty;
     }
 
     line += reset;
