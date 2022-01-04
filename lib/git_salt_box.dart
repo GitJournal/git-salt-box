@@ -33,7 +33,14 @@ class GitSaltBox {
       throw GSBAlreadyEncrypted();
     }
 
-    final nonce = _buildNonce(filePath, content);
+    final fileName = p.basename(filePath);
+    final nonce = Hash.blake2b(
+      content,
+      key: password,
+      digestSize: TweetNaCl.nonceLength,
+      personalisation: utf8.encode(fileName) as Uint8List,
+    );
+
     final box = SecretBox(password);
     final enc = box.encrypt(content, nonce: nonce);
 
@@ -67,20 +74,6 @@ class GitSaltBox {
     var enc = EncryptedMessage(nonce: nonce, cipherText: cipherText);
     var orig = box.decrypt(enc);
     return orig;
-  }
-
-  Uint8List _buildNonce(String filePath, Uint8List fileContent) {
-    var fileHash = Hash.sha512(fileContent);
-    var fileName = p.basename(filePath);
-    var salt = Hash.blake2b(
-      fileHash,
-      key: password,
-      digestSize: TweetNaCl.nonceLength,
-      personalisation: utf8.encode(fileName) as Uint8List,
-    );
-
-    assert(salt.length == TweetNaCl.nonceLength);
-    return salt;
   }
 }
 
