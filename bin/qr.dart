@@ -6,13 +6,13 @@ String printQr(String input) {
     errorCorrectLevel: QrErrorCorrectLevel.L,
   );
 
-  var whiteB = '\x1b[107m';
-  var blackB = '\x1b[40m';
-  var whiteSquare = '\u{3000}';
-  var blackSquare = '\u{3000}';
+  var whiteB = '\x1b[30;107m';
+  // var blackB = '\x1b[40;100m';
 
-  var white = whiteB + whiteSquare;
-  var black = blackB + blackSquare;
+  var lowerB = '\u{2584}';
+  var upperB = '\u{2580}';
+  var fullB = '\u{2588}';
+  var empty = ' ';
 
   var reset = "\x1b[m";
 
@@ -22,30 +22,44 @@ String printQr(String input) {
 
   var output = '';
 
-  output += _margin(margin, margin, width, white, reset);
+  output += _margin(margin * 2, margin, width, whiteB + empty, reset);
 
-  for (int y = 0; y < qrImage.moduleCount; y++) {
+  for (int y = 0; y < width; y += 2) {
     var line = '';
 
-    for (var x = 0; x < margin; x++) {
-      line += white;
+    for (var x = 0; x < margin * 2; x++) {
+      line += whiteB + empty;
     }
 
     for (int x = 0; x < width; x++) {
-      line += qrImage.isDark(y, x) ? black : white;
+      var isDark = qrImage.isDark(y, x);
+      var darkBelow = y + 1 == width ? false : qrImage.isDark(y + 1, x);
+      if (isDark) {
+        if (darkBelow) {
+          line += whiteB + fullB;
+        } else {
+          line += whiteB + upperB;
+        }
+      } else {
+        if (darkBelow) {
+          line += whiteB + lowerB;
+        } else {
+          line += whiteB + empty;
+        }
+      }
     }
 
-    for (var x = 0; x < margin; x++) {
-      line += white;
+    for (var x = 0; x < margin * 2; x++) {
+      line += whiteB + empty;
     }
 
     line += reset;
     output += line + '\n';
   }
 
-  output += _margin(margin, margin, width, white, reset);
+  output += _margin(margin * 2, margin, width, whiteB + empty, reset);
 
-  return output;
+  return output.trimRight();
 }
 
 String _margin(
