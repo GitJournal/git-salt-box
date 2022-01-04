@@ -2,7 +2,6 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:dart_git/dart_git.dart';
 import 'package:pinenacl/api.dart';
@@ -106,7 +105,7 @@ void main(List<String> arguments) {
       // var markerSize = arguments[4];
       // var tempFile = arguments[5];
 
-      // // FIXME: Decrypt all of them
+      // Decrypt all of them
 
       // // Call git-merge-file
 
