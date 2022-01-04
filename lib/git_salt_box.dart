@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:buffer/buffer.dart';
 import 'package:collection/collection.dart';
 import 'package:path/path.dart' as p;
@@ -26,12 +28,12 @@ class GitSaltBox {
       throw GSBAlreadyEncrypted();
     }
 
-    var salt = _buildSalt(filePath, Hash.sha512(content));
+    var nonce = _buildNonce(filePath, Hash.sha512(content));
     var passwordHashed = Hash.sha256(password);
     assert(passwordHashed.length == SecretBox.keyLength);
 
     final box = SecretBox(passwordHashed);
-    final enc = box.encrypt(content, nonce: salt);
+    final enc = box.encrypt(content, nonce: nonce);
 
     var builder = BytesBuilder(copy: false);
     builder.add(_magicHeader);
@@ -68,12 +70,14 @@ class GitSaltBox {
     return orig;
   }
 
-  Uint8List _buildSalt(String filePath, Uint8List fileHash) {
+  Uint8List _buildNonce(String filePath, Uint8List fileHash) {
     var fileName = p.basename(filePath);
-    var keyString = "$fileName:$password";
-    var k = Hash.sha512(keyString);
-    var hash = Hash.blake2b(fileHash, key: k);
-    var salt = hash.sublist(hash.length - TweetNaCl.nonceLength);
+    var salt = Hash.blake2b(
+      fileHash,
+      key: utf8.encode(password) as Uint8List,
+      digestSize: TweetNaCl.nonceLength,
+      personalisation: utf8.encode(fileName) as Uint8List,
+    );
 
     assert(salt.length == TweetNaCl.nonceLength);
     return salt;
