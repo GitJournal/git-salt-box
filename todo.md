@@ -15,3 +15,8 @@
 
 * Implement the merge filter using git's merge-file
 * Implement long lived process for smudge/clean
+
+* list (for listing encrypted files)
+* add
+* rm
+* lock / unlock

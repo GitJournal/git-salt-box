@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
-import 'package:pinenacl/api.dart';
 import 'package:test/test.dart';
 
 import 'package:git_salt_box/git_salt_box.dart';
@@ -14,7 +13,7 @@ void main() {
     File(filePath).writeAsStringSync(content);
 
     var box = GitSaltBox(
-      password: PineNaClUtils.randombytes(GitSaltBox.passwordLength),
+      password: base64.decode('d68FT2ZcozhNIogMp8aXeQumeW3j+WJgzdipB/Bs5Dw='),
     );
     var encMsg = box.encrypt(filePath, utf8.encode(content));
     var origContent = box.decrypt(encMsg);
