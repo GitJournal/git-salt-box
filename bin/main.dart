@@ -9,6 +9,8 @@ import 'package:pinenacl/api.dart';
 
 import 'package:git_salt_box/git_salt_box.dart';
 
+import 'qr.dart';
+
 void main(List<String> arguments) {
   if (arguments.isEmpty) {
     log("Arguments Missing");
@@ -89,6 +91,36 @@ void main(List<String> arguments) {
         exit(1);
       }
       break;
+
+    case "display":
+      final password = _fetchPassword();
+      var pStr = base64.encode(password);
+      print('Password: $pStr\n');
+      print(printQr(password));
+      break;
+
+    case "merge":
+      var baseEnc = arguments[1];
+      var localEnc = arguments[2];
+      var remoteEnc = arguments[3];
+
+      var markerSize = arguments[4];
+      var tempFile = arguments[5];
+
+      // TODO: Decrypt all of them
+
+      // Call git-merge-file
+
+      try {
+        init();
+      } on NotAGitRepoException catch (e) {
+        print(e);
+        exit(1);
+      } on GitSaltBoxNotInitialized catch (e) {
+        print(e);
+        exit(1);
+      }
+      break;
   }
 }
 
@@ -129,6 +161,11 @@ void init() {
       repo.config.getOrCreateSection('diff').getOrCreateSection(_execName);
   diffSection.options['textconv'] = '"$_execName" textconv';
   diffSection.options['binary'] = 'true';
+
+  var mergeSection =
+      repo.config.getOrCreateSection('merge').getOrCreateSection(_execName);
+  mergeSection.options['driver'] = '"$_execName" merge %O %A %B %L %P';
+  mergeSection.options['name'] = 'Merge Git-Salt-Box Secret Files';
 
   var r = repo.saveConfig();
   if (r.isFailure) {

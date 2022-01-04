@@ -14,6 +14,7 @@ dependencies:
     git: https://github.com/GitJournal/dart_git.git
     # path: ../dart-git/
   pinenacl: ^0.3.3
+  qr: ^3.0.0
   sodium: ^1.2.0
 
 dev_dependencies:
