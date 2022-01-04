@@ -12,6 +12,7 @@ dependencies:
   collection: ^1.15.0
   dart_git:
     git: https://github.com/GitJournal/dart_git.git
+    # path: ../dart-git/
   pinenacl: ^0.3.3
   sodium: ^1.2.0
 

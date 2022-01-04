@@ -10,7 +10,7 @@ import 'package:git_salt_box/git_salt_box.dart';
 
 var password = "foo";
 
-Future<void> main(List<String> arguments) async {
+void main(List<String> arguments) {
   if (arguments.isEmpty) {
     log("Arguments Missing");
     exit(1);
@@ -62,7 +62,7 @@ Future<void> main(List<String> arguments) async {
       break;
 
     case "init":
-      await init();
+      init();
       break;
   }
 }
@@ -80,7 +80,7 @@ Uint8List readInput() {
 
 const _execName = "git-salt-box";
 
-Future<void> init() async {
+void init() {
   var repoPath = GitRepository.findRootDir(Directory.current.path);
   if (repoPath == null) {
     print(
@@ -88,7 +88,7 @@ Future<void> init() async {
     exit(1);
   }
 
-  var repo = await GitRepository.load(repoPath).getOrThrow();
+  var repo = GitRepository.load(repoPath).getOrThrow();
   var section =
       repo.config.getOrCreateSection('filter').getOrCreateSection(_execName);
 
@@ -105,7 +105,7 @@ Future<void> init() async {
   gjSection.options["version"] = GitSaltBox.version.toString();
   gjSection.options["password"] = _generatePassword();
 
-  var r = await repo.saveConfig();
+  var r = repo.saveConfig();
   if (r.isFailure) {
     print(r.stackTrace);
     exit(1);
