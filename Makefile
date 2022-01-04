@@ -7,3 +7,8 @@ install:
 
 fmt:
 	dart run import_sorter:main
+
+test:
+	dart test
+
+.PHONY: test
