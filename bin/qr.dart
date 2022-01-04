@@ -1,16 +1,15 @@
-import 'package:pinenacl/ed25519.dart';
 import 'package:qr/qr.dart';
 
-String printQr(Uint8List input) {
-  final qrCode = QrCode.fromUint8List(
+String printQr(String input) {
+  final qrCode = QrCode.fromData(
     data: input,
     errorCorrectLevel: QrErrorCorrectLevel.L,
   );
 
   var whiteB = '\x1b[107m';
   var blackB = '\x1b[40m';
-  var whiteSquare = '⬜';
-  var blackSquare = '⬛';
+  var whiteSquare = '\u{3000}';
+  var blackSquare = '\u{3000}';
 
   var white = whiteB + whiteSquare;
   var black = blackB + blackSquare;

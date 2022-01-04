@@ -96,7 +96,7 @@ void main(List<String> arguments) {
       final password = _fetchPassword();
       var pStr = base64.encode(password);
       print('Password: $pStr\n');
-      print(printQr(password));
+      print(printQr(pStr));
       break;
 
     case "merge":
