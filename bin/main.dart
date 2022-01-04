@@ -79,7 +79,15 @@ void main(List<String> arguments) {
       break;
 
     case "init":
-      init();
+      try {
+        init();
+      } on NotAGitRepoException catch (e) {
+        print(e);
+        exit(1);
+      } on GitSaltBoxNotInitialized catch (e) {
+        print(e);
+        exit(1);
+      }
       break;
   }
 }
@@ -100,27 +108,27 @@ const _execName = "git-salt-box";
 void init() {
   var repoPath = GitRepository.findRootDir(Directory.current.path);
   if (repoPath == null) {
-    print(
-        'fatal: not a git repository (or any of the parent directories): .git');
-    exit(1);
+    throw NotAGitRepoException();
   }
 
   var repo = GitRepository.load(repoPath).getOrThrow();
-  var section =
-      repo.config.getOrCreateSection('filter').getOrCreateSection(_execName);
-
-  if (section.isNotEmpty) {
-    print(
-        'Error: this repository has already been initialized with $_execName.');
-    exit(1);
+  var gjSection = repo.config.getOrCreateSection(_execName);
+  if (gjSection.isNotEmpty) {
+    throw GitSaltBoxNotInitialized();
   }
 
-  section.options['smudge'] = '"$_execName" smudge';
-  section.options['clean'] = '"$_execName" clean';
-
-  var gjSection = repo.config.getOrCreateSection(_execName);
   gjSection.options["version"] = GitSaltBox.version.toString();
   gjSection.options["password"] = _generatePassword();
+
+  var filterSection =
+      repo.config.getOrCreateSection('filter').getOrCreateSection(_execName);
+  filterSection.options['smudge'] = '"$_execName" smudge';
+  filterSection.options['clean'] = '"$_execName" clean %f';
+
+  var diffSection =
+      repo.config.getOrCreateSection('diff').getOrCreateSection(_execName);
+  diffSection.options['textconv'] = '"$_execName" textconv';
+  diffSection.options['binary'] = 'true';
 
   var r = repo.saveConfig();
   if (r.isFailure) {
