@@ -1,10 +1,11 @@
 #!/usr/bin/env dart
 
+import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:dart_git/dart_git.dart';
+import 'package:pinenacl/api.dart';
 
 import 'package:git_salt_box/git_salt_box.dart';
 
@@ -128,7 +129,7 @@ void init() {
   }
 }
 
-String _fetchPassword() {
+Uint8List _fetchPassword() {
   var repoPath = GitRepository.findRootDir(Directory.current.path);
   if (repoPath == null) {
     throw NotAGitRepoException();
@@ -144,19 +145,16 @@ String _fetchPassword() {
   if (password == null) {
     throw GitSaltBoxNotInitialized();
   }
-  return password;
+  var p = base64.decode(password);
+  if (p.length != GitSaltBox.passwordLength) {
+    throw PasswordCorrupted();
+  }
+  return p;
 }
 
-// Wouldn't it be better to generate a more secure password and just base64 encode it?
 String _generatePassword() {
-  const _chars =
-      'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
-
-  var _rnd = Random.secure();
-  var length = 32;
-
-  return String.fromCharCodes(Iterable.generate(
-      length, (_) => _chars.codeUnitAt(_rnd.nextInt(_chars.length))));
+  var bytes = PineNaClUtils.randombytes(32);
+  return base64.encode(bytes);
 }
 
 void log(dynamic message) {
@@ -176,3 +174,5 @@ class GitSaltBoxNotInitialized implements Exception {
   @override
   String toString() => "GitSaltBox has not been installed";
 }
+
+class PasswordCorrupted implements Exception {}

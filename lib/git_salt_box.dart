@@ -16,9 +16,14 @@ class GitSaltBox {
   static const version = 1;
 
   // final Sodium sodium;
-  final String password;
+  final Uint8List password;
+  static const passwordLength = SecretBox.keyLength;
 
-  GitSaltBox({required this.password});
+  GitSaltBox({required this.password}) {
+    if (password.length != passwordLength) {
+      throw ArgumentError("Password length must be $passwordLength");
+    }
+  }
 
   /// throws GSBAlreadyEncrypted
   Uint8List encrypt(String filePath, List<int> input) {
@@ -28,11 +33,8 @@ class GitSaltBox {
       throw GSBAlreadyEncrypted();
     }
 
-    var nonce = _buildNonce(filePath, Hash.sha512(content));
-    var passwordHashed = Hash.sha256(password);
-    assert(passwordHashed.length == SecretBox.keyLength);
-
-    final box = SecretBox(passwordHashed);
+    final nonce = _buildNonce(filePath, content);
+    final box = SecretBox(password);
     final enc = box.encrypt(content, nonce: nonce);
 
     var builder = BytesBuilder(copy: false);
@@ -60,21 +62,19 @@ class GitSaltBox {
     var nonce = reader.read(_nonceLength);
     var cipherText = reader.read(reader.remainingLength);
 
-    var passwordHashed = Hash.sha256(password);
-    assert(passwordHashed.length == SecretBox.keyLength);
-
-    final box = SecretBox(passwordHashed);
+    final box = SecretBox(password);
 
     var enc = EncryptedMessage(nonce: nonce, cipherText: cipherText);
     var orig = box.decrypt(enc);
     return orig;
   }
 
-  Uint8List _buildNonce(String filePath, Uint8List fileHash) {
+  Uint8List _buildNonce(String filePath, Uint8List fileContent) {
+    var fileHash = Hash.sha512(fileContent);
     var fileName = p.basename(filePath);
     var salt = Hash.blake2b(
       fileHash,
-      key: utf8.encode(password) as Uint8List,
+      key: password,
       digestSize: TweetNaCl.nonceLength,
       personalisation: utf8.encode(fileName) as Uint8List,
     );
