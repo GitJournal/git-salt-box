@@ -13,6 +13,7 @@ class GitSaltBox {
   // GITSB + version + \0
   static final _magicHeader =
       Uint8List.fromList([71, 73, 84, 83, 66, version, 0]);
+  static const _magicHeaderLength = 7;
   static const version = 1;
 
   // final Sodium sodium;
@@ -27,8 +28,8 @@ class GitSaltBox {
 
   /// throws GSBAlreadyEncrypted
   Uint8List encrypt(String filePath, List<int> input) {
-    var content = input is Uint8List ? input : Uint8List.fromList(input);
-    var header = Uint8List.sublistView(content, 0, _magicHeader.length);
+    final content = input is Uint8List ? input : Uint8List.fromList(input);
+    final header = Uint8List.sublistView(content, 0, _magicHeader.length);
     if (_eq(header, _magicHeader)) {
       throw GSBAlreadyEncrypted();
     }
@@ -44,7 +45,7 @@ class GitSaltBox {
     final box = SecretBox(password);
     final enc = box.encrypt(content, nonce: nonce);
 
-    var builder = BytesBuilder(copy: false);
+    final builder = BytesBuilder(copy: false);
     builder.add(_magicHeader);
     builder.add(enc);
     return builder.toBytes();
@@ -52,32 +53,30 @@ class GitSaltBox {
 
   /// throws GSBNotEncrypted
   Uint8List decrypt(Uint8List encMessage) {
-    var mhLen = _magicHeader.length;
-    if (encMessage.length < 25 + mhLen) {
+    const minLength = TweetNaCl.nonceLength + _magicHeaderLength + 1;
+    if (encMessage.length < minLength) {
       throw GSBNotEncrypted();
     }
 
-    var reader = ByteDataReader(copy: false);
+    final reader = ByteDataReader(copy: false);
     reader.add(encMessage);
 
-    var header = reader.read(mhLen);
+    final header = reader.read(_magicHeaderLength);
     if (!_eq(header, _magicHeader)) {
       throw GSBNotEncrypted();
     }
 
-    var _nonceLength = 24;
-    var nonce = reader.read(_nonceLength);
-    var cipherText = reader.read(reader.remainingLength);
+    final nonce = reader.read(TweetNaCl.nonceLength);
+    final cipherText = reader.read(reader.remainingLength);
 
     final box = SecretBox(password);
+    final orig = box.decrypt(ByteList.fromList(cipherText), nonce: nonce);
 
-    var enc = EncryptedMessage(nonce: nonce, cipherText: cipherText);
-    var orig = box.decrypt(enc);
     return orig;
   }
 }
 
-var _eq = ListEquality().equals;
+final _eq = ListEquality().equals;
 
 class GSBAlreadyEncrypted implements Exception {}
 
